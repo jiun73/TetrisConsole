@@ -80,6 +80,7 @@ public:
 	void hideCursor();
 
 	void setConsoleSettings(const ConsolePixel& pixel);
+	void setDrawPencil(const ConsolePixel& pixel) { pencil = pixel; }
 	void setConsoleColor(const fgConsoleColors& fg, const bgConsoleColors& bg) { SetConsoleTextAttribute(console, fg | bg); }
 	void setDrawColor(const fgConsoleColors& fg, const bgConsoleColors& bg) { setConsoleColor(fg, bg); pencil.fg = fg; pencil.bg = bg; }
 	void setDrawGlyph(const char& _glyph) { pencil.glyph = _glyph; }

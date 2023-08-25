@@ -31,7 +31,7 @@ private:
 	int speed = 10;
 
 	int cntr2 = 0;
-	int cooldown = 2;
+	int cooldown = 5;
 
 	Tetromino block;
 
@@ -51,7 +51,7 @@ public:
 			{ 
 				block.pos.y--;
 				board.addTetromino(block);
-				block.setType(rand() % 5);
+				block.setType(rand() % 7);
 				block.pos = blocklDF;
 				return;
 			}
@@ -65,30 +65,39 @@ public:
 
 		ren.setDrawColor(WHITE, BG_BLACK);
 
-		if (GetKeyState(VK_LEFT) & 0x8000)
+		if (GetKeyState(VK_LEFT) & 0x8000 && cntr2 == 0)
 		{
+			cntr2 = cooldown;
 			block.pos.x--;
 
 			while (board.isColliding(block))
 				block.pos.x++; 
 		}
 
-		if (GetKeyState(VK_RIGHT) & 0x8000)
+		if (GetKeyState(VK_RIGHT) & 0x8000 && cntr2 == 0)
 		{
+			cntr2 = cooldown;
 			block.pos.x++;
 
 			if (board.isColliding(block))
 				block.pos.x--;
 		}
 
+		if (!GetKeyState(VK_RIGHT) & 0x8000 && !GetKeyState(VK_LEFT) & 0x8000)
+			cntr = 0;
+
+		cntr2--;
+		if (cntr2 < 0)
+			cntr2 = 0;
+
 		ren.setDrawGlyph('@');
 		board.draw(ren);
-		drawRectPatch({ {20, 0 }, { 11, 21 } }, ren);
 
-		ren.setDrawColor(GREEN, BG_BLACK);
 		ren.setDrawGlyph(219);
 		block.draw(ren, {block.pos.x + 16, block.pos.y});
-		ren.setDrawColor(BLACK, BG_BLACK);
+		ren.setDrawColor(WHITE, BG_BLACK);
+
+		drawRectPatch({ {20, 0 }, { 11, 21 } }, ren);
 
 		ren.present();
 	}

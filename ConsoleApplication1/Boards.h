@@ -40,9 +40,11 @@ private:
 		(uint16_t)0b1000000000010000,
 		(uint16_t)0b1000000000010000,
 		(uint16_t)0b1000000000010000,
-		(uint16_t)0b1000110000010000,
+		(uint16_t)0b1000000000010000,
 		(uint16_t)0b1111111111110000,
 	};
+
+	std::map<V2d_i, ConsolePixel> placedBlocks;
 
 
 public:
@@ -77,10 +79,14 @@ public:
 			uint16_t& boardLine = board.at(y);
 			boardLine |= line;
 		}
+		
+		for (auto& l : block.drawList())
+			placedBlocks.emplace(l);
 	}
 
-	void draw(ConsoleRenderer& ren) {
-		int y = 0;
+	void draw(ConsoleRenderer& ren) 
+	{
+		/*int y = 0;
 		for (auto l : board)
 		{
 			for (int i = 0; i < 16; i++)
@@ -89,11 +95,17 @@ public:
 				bool current = l & mask;
 				if (current)
 				{
-					V2d_i r = { (i % 16) + 16, y };
+					V2d_i r = { (i % 16) + 16, y - 10 };
 					ren.drawPixel(r);
 				}
 			}
 			y++;
+		}*/
+
+		for (auto& l : placedBlocks)
+		{
+			ren.setDrawPencil(l.second);
+			ren.drawPixel(l.first + V2d_i(16,0));
 		}
 	}
 };
