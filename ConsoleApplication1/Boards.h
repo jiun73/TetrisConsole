@@ -59,7 +59,7 @@ public:
 			int y = i + block.pos.y + 10;
 			
 			if (y >= board.size()) break;
-			uint16_t line = getTetrominoLine(block.data, i) << block.pos.x;
+			uint16_t line = getTetrominoLine(block.getData(), i) << block.pos.x;
 			uint16_t boardLine = board.at(y);
 			if ((line & boardLine) != 0)
 			{
