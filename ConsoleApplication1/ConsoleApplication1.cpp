@@ -1,5 +1,6 @@
 #include "Boards.h"
 #include "Tetrominos.h" 
+#include "Random.h"
 
 void drawRectPatch(const Rect& dest, ConsoleRenderer& ren)
 {
@@ -36,6 +37,7 @@ private:
 	bool lockRotation = false;
 
 	Tetromino block;
+	Random rng;
 
 public:
 	Tetris() { block.pos = blocklDF; }
@@ -76,7 +78,7 @@ public:
 			{ 
 				block.pos.y--;
 				board.addTetromino(block);
-				block.setType(rand() % 7);
+				block.setType(rng.range(0,6));
 				block.pos = blocklDF;
 				return;
 			}

@@ -155,8 +155,10 @@
     <ClCompile Include="ConsoleApplication1.cpp" />
     <ClCompile Include="ConsoleRenderer.cpp" />
     <ClCompile Include="ConsoleRenderer.h" />
+    <ClCompile Include="Random.h" />
     <ClCompile Include="TetrisGlobal.cpp" />
     <ClCompile Include="TetrisGlobal.h" />
+    <ClCompile Include="Tetrominos.cpp" />
     <ClCompile Include="Tetrominos.h" />
     <ClCompile Include="Vector2D.h" />
   </ItemGroup>

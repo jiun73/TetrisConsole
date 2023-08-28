@@ -39,6 +39,12 @@
     <ClCompile Include="Tetrominos.h">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="Tetrominos.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Random.h">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Rect.h">

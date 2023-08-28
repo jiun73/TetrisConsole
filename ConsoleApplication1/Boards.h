@@ -83,8 +83,11 @@ public:
 		
 		for (auto& l : block.drawList())
 		{
-			placedBlocks.resize(40);
-			placedBlocks[l.first.y].emplace(l.first.x, l.second);
+			if (l.first.y >= 0)
+			{
+				placedBlocks.resize(40);
+				placedBlocks[l.first.y].emplace(l.first.x, l.second);
+			}
 		}
 	}
 
@@ -94,7 +97,7 @@ public:
 		board.push_front(0b1000000000010000);
 
 		placedBlocks.erase(placedBlocks.begin() + y - 10);
-
+		placedBlocks.push_front(std::map<int, ConsolePixel>());
 	}
 
 	int checkFullLine() 
