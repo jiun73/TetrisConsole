@@ -89,6 +89,23 @@ public:
 	void drawLineHorizontal(const V2d_i& pos, const int& length);
 	void drawRect(const Rect& dest);
 	void drawPixel(const V2d_i& pos) { if (!isWithinScreen(pos)) return; screenBuffer[pos] = pencil; }
+	void drawText(const std::string& text, V2d_i pos) 
+	{
+		int spos = pos.x;
+		for (auto& s : text)
+		{
+			if (s == '\n')
+			{
+				pos.x = spos;
+				pos.y++;
+				continue;
+			}
+
+			setDrawGlyph(s);
+			drawPixel(pos);
+			pos.x++;
+		}
+	}
 
 	void output(const std::string& out);
 	void clear() { system("cls"); }

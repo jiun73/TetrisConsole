@@ -52,9 +52,18 @@ public:
 	TetrisBoard() {  }
 	~TetrisBoard() {}
 
+	bool checkForLoss() 
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			if (board.at(i) != 0b1000000000010000)
+				return true;
+		}
+		return false;
+	}
+
 	//return if a tetromino is colliding with the board
 	bool isColliding(Tetromino& block) {
-		std::cout << "bruh";
 		for (int i = 0; i < 4; i++)
 		{
 			int y = i + block.pos.y + 10;

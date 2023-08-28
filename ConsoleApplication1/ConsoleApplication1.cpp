@@ -21,6 +21,7 @@ void drawRectPatch(const Rect& dest, ConsoleRenderer& ren)
 }
 
 #include <bitset>
+#include <string>
 
 class Tetris 
 {
@@ -33,15 +34,32 @@ private:
 
 	int cntr2 = 0;
 	int cooldown = 5;
-
 	bool lockRotation = false;
 
 	Tetromino block;
+	Tetromino backup;
 	Random rng;
 
+	int linesCleared = 0;
+	int level = 0;
+	int points = 0;
+
 public:
-	Tetris() { block.pos = blocklDF; }
+	Tetris()
+	{
+		block.pos = blocklDF;
+		block.setType(rng.range(0, 6));
+		backup.setType(rng.range(0, 6));
+
+	}
 	~Tetris() {}
+
+	void nextBlock() 
+	{
+		block = backup;
+		block.pos = blocklDF;
+		backup.setType(rng.range(0, 6));
+	}
 
 	void testBlockCollisionRotation()
 	{
@@ -68,6 +86,13 @@ public:
 
 	void update()
 	{
+		speed = ((15 - level) * 2) + 1;
+
+		if (GetKeyState(VK_DOWN) & 0x8000 && cntr2 == 0)
+		{
+			cntr = 99;
+		}
+
 		cntr++ ;
 		if (cntr > speed)
 		{
@@ -78,8 +103,7 @@ public:
 			{ 
 				block.pos.y--;
 				board.addTetromino(block);
-				block.setType(rng.range(0,6));
-				block.pos = blocklDF;
+				nextBlock();
 				return;
 			}
 		}
@@ -89,6 +113,9 @@ public:
 
 		ren.setDrawGlyph(' ');
 		ren.drawRect({ {20, 0 }, { 11, 21 } });
+
+		ren.setDrawGlyph(' ');
+		ren.drawRect({ {41, 2 }, { 4, 4 } });
 
 		ren.setDrawColor(WHITE, BG_BLACK);
 
@@ -142,8 +169,31 @@ public:
 		ren.setDrawColor(WHITE, BG_BLACK);
 
 		drawRectPatch({ {20, 0 }, { 11, 21 } }, ren);
+		drawRectPatch({ {40, 1 }, { 6, 6 } }, ren);
+		ren.setDrawGlyph((char)219);
+		backup.draw(ren, { 41, 2 });
+		ren.drawText("points: " + std::to_string(points), { 40, 10 });
+		ren.drawText("lines: " + std::to_string(linesCleared), { 40, 11 });
+		ren.drawText("level: " + std::to_string(level), {40, 12});
 
-		board.checkFullLine();
+		int cleared = board.checkFullLine();
+		linesCleared += cleared;
+		int reward = 0;
+		switch (cleared)
+		{
+		case 1: reward = 100; break;
+		case 2: reward = 300; break;
+		case 3: reward = 500; break;
+		case 4: reward = 800; break;
+		default: reward = 0; break;
+		}
+		points += reward;
+
+		if (linesCleared >= 10)
+		{
+			level++;
+			linesCleared = 0;
+		}
 
 		ren.present();
 	}
