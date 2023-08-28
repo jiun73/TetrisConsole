@@ -130,18 +130,6 @@ public:
 					ren.drawPixel(V2d_i(x,y) + pos);
 			}
 		}
-
-		/*for (int i = 0; i < 16; i++)
-		{
-			int16_t mask = (1 << (16 - i));
-			bool current = (bits & mask) >> (16 - i);
-			if (current)
-			{
-				V2d_i r = { 4 - (i % 4), i / 4 };
-				std::cout << i << r ;
-				ren.drawPixel(r + pos);
-			}
-		}*/
 	}
 
 };

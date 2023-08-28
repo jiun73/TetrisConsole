@@ -2,13 +2,15 @@
 #include "TetrisGlobal.h"
 #include "Tetrominos.h"
 #include <vector>
+#include <map>
+#include <deque>
 #include <bitset>
 
 class TetrisBoard
 {
 private:
 	//a list of 16-bit integers representing the Tetris playspace
-	std::vector<uint16_t> board = {
+	std::deque<uint16_t> board = {
 		(uint16_t)0b1000000000010000,
 		(uint16_t)0b1000000000010000,
 		(uint16_t)0b1000000000010000,
@@ -41,14 +43,13 @@ private:
 		(uint16_t)0b1000000000010000,
 		(uint16_t)0b1000000000010000,
 		(uint16_t)0b1000000000010000,
-		(uint16_t)0b1111111111110000,
+		(uint16_t)0b1111111111111111,
 	};
 
-	std::map<V2d_i, ConsolePixel> placedBlocks;
-
+	std::deque<std::map<int, ConsolePixel>> placedBlocks;
 
 public:
-	TetrisBoard() {}
+	TetrisBoard() {  }
 	~TetrisBoard() {}
 
 	//return if a tetromino is colliding with the board
@@ -81,7 +82,40 @@ public:
 		}
 		
 		for (auto& l : block.drawList())
-			placedBlocks.emplace(l);
+		{
+			placedBlocks.resize(40);
+			placedBlocks[l.first.y].emplace(l.first.x, l.second);
+		}
+	}
+
+	void removeLine(int y) 
+	{
+		board.erase(board.begin() + y);
+		board.push_front(0b1000000000010000);
+
+		placedBlocks.erase(placedBlocks.begin() + y - 10);
+
+	}
+
+	int checkFullLine() 
+	{
+		size_t i = 0;
+		std::vector<size_t> indexes;
+		for(auto& l : board)
+		{
+			if (l == 0b1111111111110000)
+			{
+				indexes.push_back(i);
+			}
+			i++;
+		}
+
+		for (auto& ii : indexes)
+		{
+			removeLine(ii);
+		}
+
+		return indexes.size();
 	}
 
 	void draw(ConsoleRenderer& ren) 
@@ -102,10 +136,16 @@ public:
 			y++;
 		}*/
 
+		int i = 0;
 		for (auto& l : placedBlocks)
 		{
-			ren.setDrawPencil(l.second);
-			ren.drawPixel(l.first + V2d_i(16,0));
+			for (auto& p : l)
+			{
+				V2d_i pos = { p.first, i };
+				ren.setDrawPencil(p.second);
+				ren.drawPixel(pos + V2d_i(16, 0));
+			}
+			i++;
 		}
 	}
 };

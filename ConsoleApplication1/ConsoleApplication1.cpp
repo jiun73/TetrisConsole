@@ -141,6 +141,8 @@ public:
 
 		drawRectPatch({ {20, 0 }, { 11, 21 } }, ren);
 
+		board.checkFullLine();
+
 		ren.present();
 	}
 };
