@@ -26,7 +26,7 @@ class Tetromino
 			(TetrominoBits)0b0110110000000000,
 			(TetrominoBits)0b0100010011000000,
 
-			(TetrominoBits)0b0001111000000000,
+			(TetrominoBits)0b0000111100000000,
 			(TetrominoBits)0b0100110010000000,
 			(TetrominoBits)0b1110100000000000,
 			(TetrominoBits)0b1100110000000000,
@@ -42,7 +42,7 @@ class Tetromino
 			(TetrominoBits)0b0110110000000000,
 			(TetrominoBits)0b1100100010000000,
 
-			(TetrominoBits)0b0000000111100000,
+			(TetrominoBits)0b0000000011110000,
 			(TetrominoBits)0b0100110010000000,
 			(TetrominoBits)0b0010111000000000,
 			(TetrominoBits)0b1100110000000000,
@@ -97,17 +97,18 @@ public:
 		ConsolePixel p;
 		p.fg = colors[type];
 		p.bg = BG_BLACK;
-		p.glyph = '@';
+		p.glyph = (char)219;
 
-		int16_t bits = getData();
-		for (int i = 0; i < 16; i++)
+		uint16_t bits = getData();
+
+		for (int y = 0; y < 4; y++)
 		{
-			int16_t mask = (1 << (16 - i));
-			bool current = (bits & mask) >> (16 - i);
-			if (current)
+			for (int x = 0; x < 4; x++)
 			{
-				V2d_i r = { 4 - (i % 4), i / 4 };
-				list.emplace((r + pos), p);
+				uint16_t line = getTetrominoLine(bits, y);
+				uint16_t current = line & (1 << x);
+				if (current)
+					list.emplace(V2d_i(x, y) + pos, p);
 			}
 		}
 
@@ -117,17 +118,30 @@ public:
 	void draw(ConsoleRenderer& ren, const V2d_i& pos)
 	{
 		ren.setDrawColor(colors[type], BG_BLACK);
-		int16_t bits = getData();
-		for (int i = 0; i < 16; i++)
+		uint16_t bits = getData();
+
+		for (int y = 0; y < 4; y++)
+		{
+			for (int x = 0; x < 4; x++)
+			{
+				uint16_t line = getTetrominoLine(bits, y);
+				uint16_t current = line & (1 << x);
+				if(current)
+					ren.drawPixel(V2d_i(x,y) + pos);
+			}
+		}
+
+		/*for (int i = 0; i < 16; i++)
 		{
 			int16_t mask = (1 << (16 - i));
 			bool current = (bits & mask) >> (16 - i);
 			if (current)
 			{
 				V2d_i r = { 4 - (i % 4), i / 4 };
+				std::cout << i << r ;
 				ren.drawPixel(r + pos);
 			}
-		}
+		}*/
 	}
 
 };

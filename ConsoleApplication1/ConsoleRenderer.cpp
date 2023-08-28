@@ -2,7 +2,7 @@
 
 void ConsoleRenderer::setConsoleToCursor()
 {
-	COORD pos = { cursor.x, cursor.y };
+	COORD pos = { (short)cursor.x, (short)cursor.y };
 	SetConsoleCursorPosition(console, pos);
 }
 

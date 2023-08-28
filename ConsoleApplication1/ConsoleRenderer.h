@@ -52,7 +52,7 @@ struct ConsolePixel
 {
 	bgConsoleColors bg = BG_BLACK;
 	fgConsoleColors fg = BLACK;
-	char glyph = 219;
+	char glyph = (char)219;
 };
 
 class ConsoleRenderer
