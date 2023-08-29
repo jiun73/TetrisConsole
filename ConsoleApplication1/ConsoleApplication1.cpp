@@ -56,6 +56,8 @@ private:
 	bool lost = false;
 	bool clr = false;
 
+	bool flash = false;
+
 	Tetromino block;
 	Tetromino backup;
 	ConsoleKeyboard kin;
@@ -176,9 +178,13 @@ public:
 			cntr2 = 0;
 	}
 
-	void calcPoints() 
+	void calcPoints()
 	{
 		int cleared = board.checkFullLine();
+
+		if (cleared)
+			flash = true;
+
 		linesCleared += cleared;
 		int reward = 0;
 		switch (cleared)
@@ -207,6 +213,11 @@ public:
 
 		ren.setDrawColor(WHITE, BG_BLACK);
 
+		if(flash)
+		{
+			ren.setDrawColor(WHITE, BG_WHITE);
+			flash = false;
+		}
 		ren.setDrawGlyph(' ');
 		ren.drawRect({ {20, 0 }, { 11, 21 } });
 
