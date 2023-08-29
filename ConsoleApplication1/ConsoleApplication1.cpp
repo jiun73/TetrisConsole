@@ -56,10 +56,13 @@ private:
 	bool lost = false;
 	bool clr = false;
 
+	bool saveLock = false;
+
 	bool flash = false;
 
 	Tetromino block;
 	Tetromino backup;
+	Tetromino* save = nullptr;
 	ConsoleKeyboard kin;
 	Random rng;
 
@@ -131,6 +134,7 @@ public:
 				block.pos.y--;
 				board.addTetromino(block);
 				nextBlock();
+				saveLock = false;
 				return;
 			}
 		}
@@ -173,6 +177,30 @@ public:
 		if (!kin.held(VK_RIGHT) && !kin.held(VK_LEFT))
 			cntr2 = 0;
 
+		if (kin.held('C') && !saveLock)
+		{
+			Tetromino temp;
+			bool wasNull = true;
+			if (save != nullptr)
+			{
+				temp = *save;
+				delete save;
+				wasNull = false;
+			}
+
+			save = new Tetromino(block);
+
+			if (!wasNull)
+			{
+				block = temp;
+				block.pos = blocklDF;
+			}
+			else
+				nextBlock();
+
+			saveLock = true;
+		}
+
 		cntr2--;
 		if (cntr2 < 0)
 			cntr2 = 0;
@@ -210,6 +238,8 @@ public:
 	void gameUpdate() 
 	{
 		clr = false;
+		if(save != nullptr)
+			save->pos = 0;
 
 		ren.setDrawColor(WHITE, BG_BLACK);
 
@@ -233,6 +263,8 @@ public:
 		ren.setDrawGlyph((char)219);
 		block.draw(ren, { block.pos.x + 16, block.pos.y });
 		backup.draw(ren, { 41, 2 });
+		if(save != nullptr)
+			save->draw(ren, 0);
 		ren.setDrawColor(WHITE, BG_BLACK);
 
 		drawRectPatch({ {20, 0 }, { 11, 21 } }, ren);
@@ -252,6 +284,9 @@ public:
 		{
 			if (!clr)
 			{
+				if(save != nullptr)
+					delete save;
+				save = nullptr;
 				ren.clear();
 				clr = true;
 			}
@@ -263,6 +298,7 @@ public:
 				lost = false;
 				board.clear();
 				randomBlocks();
+				ren.clear();
 			}
 			else if (kin.held('N')) 
 			{
