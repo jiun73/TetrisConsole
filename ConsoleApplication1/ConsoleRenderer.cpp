@@ -6,12 +6,14 @@ void ConsoleRenderer::setConsoleToCursor()
 	SetConsoleCursorPosition(console, pos);
 }
 
+//met le curseur de la console a une position donnée
 void ConsoleRenderer::setCursor(const V2d_i& pos)
 {
 	cursor = pos;
 	setConsoleToCursor();
 }
 
+//change le pinceau
 void ConsoleRenderer::setConsoleSettings(const ConsolePixel& pixel)
 {
 	pencil = pixel;
@@ -30,11 +32,31 @@ void ConsoleRenderer::drawLineHorizontal(const V2d_i& pos, const int& length)
 		drawPixel({ x + pos.x, pos.y });
 }
 
+
 void ConsoleRenderer::drawRect(const Rect& dest)
 {
 	for (int y = 0; y < dest.sz.y; y++)
 		for (int x = 0; x < dest.sz.x; x++)
 			drawPixel({ x + dest.pos.x,y + dest.pos.y });
+}
+
+//Adds given string to the screen buffer
+void ConsoleRenderer::drawText(const std::string& text, V2d_i pos)
+{
+	int spos = pos.x;
+	for (auto& s : text)
+	{
+		if (s == '\n')
+		{
+			pos.x = spos;
+			pos.y++;
+			continue;
+		}
+
+		setDrawGlyph(s);
+		drawPixel(pos);
+		pos.x++;
+	}
 }
 
 void ConsoleRenderer::hideCursor()
@@ -45,15 +67,7 @@ void ConsoleRenderer::hideCursor()
 	SetConsoleCursorInfo(console, &info);
 }
 
-void ConsoleRenderer::output(const std::string& out)
-{
-	setCursor({ 0, 30 });
-	setDrawColor(WHITE, BG_BLACK);
-	for (auto& c : out)
-		std::cout << c;
-	//currentOutputLine++;
-}
-
+//vérifie si la position est en dedans de la fenêtre de la console
 bool ConsoleRenderer::isWithinScreen(const V2d_i& pos)
 {
 	if (pos.x < 0) return false;
@@ -67,6 +81,7 @@ bool ConsoleRenderer::isWithinScreen(const V2d_i& pos)
 	return true;
 }
 
+//donne la taille de la fenêtre de la console
 V2d_i ConsoleRenderer::getConsoleSize()
 {
 	V2d_i size;
@@ -78,6 +93,7 @@ V2d_i ConsoleRenderer::getConsoleSize()
 	return size;
 }
 
+//push the screen buffer to the screen
 void ConsoleRenderer::present()
 {
 	V2d_i newSize = getConsoleSize() - 1;

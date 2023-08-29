@@ -106,8 +106,8 @@ public:
 				block.pos.x -= 4; //try 2 to the left
 				if (!board.isColliding(block)) break; //if it works, break
 
-				while (board.isColliding(block)) //is all else fails, move up until it works
-					block.pos.y--;
+				while (board.isColliding(block)) //is all else fails, rotate until it works
+					block.rotate(1);
 				break;
 
 			}
@@ -119,9 +119,7 @@ public:
 		speed = ((15 - level) * 2) + 1;
 
 		if (kin.held(VK_DOWN) && cntr2 == 0)
-		{
 			cntr = 99;
-		}
 
 		cntr++;
 		if (cntr > speed)
@@ -254,6 +252,9 @@ public:
 		ren.setDrawGlyph(' ');
 		ren.drawRect({ {41, 2 }, { 4, 4 } });
 
+		ren.setDrawGlyph(' ');
+		ren.drawRect({ {0, 0 }, { 4, 4 } });
+
 		ren.setDrawColor(WHITE, BG_BLACK);
 
 		calcMovement();
@@ -318,6 +319,6 @@ int main()
 
 		game.update();
 
-		while (clock() - frameStart < 1000 / 60) {}
+		while (clock() - frameStart < 1000 / 60) {} //locks updates at 60 fps
 	}
 }

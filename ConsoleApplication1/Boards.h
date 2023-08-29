@@ -46,21 +46,22 @@ private:
 		(uint16_t)0b1111111111111111,
 	};
 
+	//Les graphiques des blocs déja placé
 	std::deque<std::map<int, ConsolePixel>> placedBlocks;
 
 public:
 	TetrisBoard() {  }
 	~TetrisBoard() {}
 
+	//réinitialise l'objet
 	void clear()
 	{
 		for (int i = 0; i < board.size() - 1; i++) 
-		{
 			board.at(i) = (uint16_t)0b1000000000010000;
-		}
 		placedBlocks.clear();
 	}
 
+	//vérifie si il y a un tétromino placé au dessus du champ visible, signifiant que le joueur a perdu
 	bool checkForLoss() 
 	{
 		for (int i = 0; i < 10; i++)
@@ -71,7 +72,7 @@ public:
 		return false;
 	}
 
-	//return if a tetromino is colliding with the board
+	//vérifie si le tétromino est en collision avec un élément dans board
 	bool isColliding(Tetromino& block) {
 		for (int i = 0; i < 4; i++)
 		{
@@ -109,6 +110,7 @@ public:
 		}
 	}
 
+	//enlève un ligne et descent le reste
 	void removeLine(int y) 
 	{
 		board.erase(board.begin() + y);
@@ -118,6 +120,7 @@ public:
 		placedBlocks.push_front(std::map<int, ConsolePixel>());
 	}
 
+	//vérifie si il y a une (ou plus) ligne pleine, et si oui, retourne la quantité
 	int checkFullLine() 
 	{
 		size_t i = 0;
@@ -125,38 +128,19 @@ public:
 		for(auto& l : board)
 		{
 			if (l == 0b1111111111110000)
-			{
 				indexes.push_back(i);
-			}
 			i++;
 		}
 
 		for (auto& ii : indexes)
-		{
-			removeLine(ii);
-		}
+			removeLine(static_cast<int>(ii));
 
-		return indexes.size();
+		return static_cast<int>(indexes.size());
 	}
 
+	//ajoute les blocks déja placé au Renderer
 	void draw(ConsoleRenderer& ren) 
 	{
-		/*int y = 0;
-		for (auto l : board)
-		{
-			for (int i = 0; i < 16; i++)
-			{
-				uint16_t mask = (1 << i);
-				bool current = l & mask;
-				if (current)
-				{
-					V2d_i r = { (i % 16) + 16, y - 10 };
-					ren.drawPixel(r);
-				}
-			}
-			y++;
-		}*/
-
 		int i = 0;
 		for (auto& l : placedBlocks)
 		{

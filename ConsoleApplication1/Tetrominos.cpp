@@ -1,5 +1,6 @@
 #include "Tetrominos.h"
 
+//Une liste d'entiers 16-bit représentant les tétrominos et leurs differentes rotations
 std::array<TetrominoBits, 4 * 7> tetrominos = {
 			(TetrominoBits)0b0100010001000100,
 			(TetrominoBits)0b1100011000000000,

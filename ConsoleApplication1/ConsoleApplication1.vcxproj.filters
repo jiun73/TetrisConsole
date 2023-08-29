@@ -13,13 +13,16 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Resource Files\Elements">
+      <UniqueIdentifier>{db736c5f-93e3-4810-84b6-3187fa7679f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DataTypes">
+      <UniqueIdentifier>{459be51b-b15b-4d64-a54e-29051d8fd345}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConsoleApplication1.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Vector2D.h">
-      <Filter>Resource Files</Filter>
     </ClCompile>
     <ClCompile Include="ConsoleRenderer.h">
       <Filter>Resource Files</Filter>
@@ -27,31 +30,31 @@
     <ClCompile Include="ConsoleRenderer.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
-    <ClCompile Include="Boards.h">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
     <ClCompile Include="TetrisGlobal.h">
       <Filter>Resource Files</Filter>
     </ClCompile>
-    <ClCompile Include="TetrisGlobal.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Tetrominos.h">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Tetrominos.cpp">
-      <Filter>Resource Files</Filter>
+    <ClCompile Include="Boards.h">
+      <Filter>Resource Files\Elements</Filter>
     </ClCompile>
     <ClCompile Include="Random.h">
+      <Filter>Resource Files\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector2D.h">
+      <Filter>Resource Files\DataTypes</Filter>
+    </ClCompile>
+    <ClCompile Include="Tetrominos.h">
+      <Filter>Resource Files\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="Tetrominos.cpp">
+      <Filter>Resource Files\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="TetrisGlobal.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Rect.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Color.h">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\DataTypes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
