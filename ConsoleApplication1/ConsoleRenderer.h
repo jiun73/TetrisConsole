@@ -72,6 +72,7 @@ public:
 	ConsoleRenderer() 
 	{ 
 		console = GetStdHandle(STD_OUTPUT_HANDLE); 
+		hideCursor();
 	}
 	~ConsoleRenderer() {}
 
@@ -108,7 +109,8 @@ public:
 	}
 
 	void output(const std::string& out);
-	void clear() { system("cls"); }
+	void clearConsole() { system("cls"); }
+	void clear() { clearConsole(); screenBuffer.clear(); }
 
 	bool isWithinScreen(const V2d_i& pos);
 

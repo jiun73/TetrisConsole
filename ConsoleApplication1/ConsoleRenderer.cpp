@@ -83,7 +83,8 @@ void ConsoleRenderer::present()
 	V2d_i newSize = getConsoleSize() - 1;
 	if (oldSize != newSize)
 	{
-		clear();
+		hideCursor();
+		clearConsole();
 		oldSize = newSize;
 	}
 

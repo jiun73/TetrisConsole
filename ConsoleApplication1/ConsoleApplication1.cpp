@@ -23,6 +23,24 @@ void drawRectPatch(const Rect& dest, ConsoleRenderer& ren)
 #include <bitset>
 #include <string>
 
+class ConsoleKeyboard 
+{
+private:
+
+public:
+	bool held(int code) 
+	{
+		return (GetKeyState(code) & 0x8000);
+	}
+
+	bool held(char c) 
+	{
+		return held((int)c);
+	}
+};
+
+bool run = true;
+
 class Tetris 
 {
 private:
@@ -35,9 +53,12 @@ private:
 	int cntr2 = 0;
 	int cooldown = 5;
 	bool lockRotation = false;
+	bool lost = false;
+	bool clr = false;
 
 	Tetromino block;
 	Tetromino backup;
+	ConsoleKeyboard kin;
 	Random rng;
 
 	int linesCleared = 0;
@@ -47,12 +68,16 @@ private:
 public:
 	Tetris()
 	{
+		randomBlocks();
+	}
+	~Tetris() {}
+
+	void randomBlocks() 
+	{
 		block.pos = blocklDF;
 		block.setType(rng.range(0, 6));
 		backup.setType(rng.range(0, 6));
-
 	}
-	~Tetris() {}
 
 	void nextBlock() 
 	{
@@ -84,23 +109,23 @@ public:
 		}
 	}
 
-	void update()
+	void calcMovement() 
 	{
 		speed = ((15 - level) * 2) + 1;
 
-		if (GetKeyState(VK_DOWN) & 0x8000 && cntr2 == 0)
+		if (kin.held(VK_DOWN) && cntr2 == 0)
 		{
 			cntr = 99;
 		}
 
-		cntr++ ;
+		cntr++;
 		if (cntr > speed)
 		{
 			cntr = 0;
 			block.pos.y++;
 
 			while (board.isColliding(block))
-			{ 
+			{
 				block.pos.y--;
 				board.addTetromino(block);
 				nextBlock();
@@ -108,44 +133,33 @@ public:
 			}
 		}
 
-		ren.hideCursor();
-		ren.setDrawColor(WHITE, BG_BLACK);
-
-		ren.setDrawGlyph(' ');
-		ren.drawRect({ {20, 0 }, { 11, 21 } });
-
-		ren.setDrawGlyph(' ');
-		ren.drawRect({ {41, 2 }, { 4, 4 } });
-
-		ren.setDrawColor(WHITE, BG_BLACK);
-
-		if (GetKeyState(0x5A) & 0x8000 && !lockRotation)
+		if (kin.held('X') && !lockRotation)
 		{
 			block.rotate(1);
 			testBlockCollisionRotation();
 			lockRotation = true;
 		}
 
-		if (GetKeyState(0x58) & 0x8000 && !lockRotation)
+		if (kin.held('Z') && !lockRotation)
 		{
 			block.rotate(0);
 			testBlockCollisionRotation();
 			lockRotation = true;
 		}
 
-		if (!(GetKeyState(0x58) & 0x8000) && !(GetKeyState(0x5A) & 0x8000))
+		if (!kin.held('Z') && !kin.held('X'))
 			lockRotation = false;
 
-		if (GetKeyState(VK_LEFT) & 0x8000 && cntr2 == 0)
+		if (kin.held(VK_LEFT) && cntr2 == 0)
 		{
 			cntr2 = cooldown;
 			block.pos.x--;
 
 			while (board.isColliding(block))
-				block.pos.x++; 
+				block.pos.x++;
 		}
 
-		if (GetKeyState(VK_RIGHT) & 0x8000 && cntr2 == 0)
+		if (kin.held(VK_RIGHT) && cntr2 == 0)
 		{
 			cntr2 = cooldown;
 			block.pos.x++;
@@ -154,28 +168,16 @@ public:
 				block.pos.x--;
 		}
 
-		if (!(GetKeyState(VK_RIGHT) & 0x8000) && !(GetKeyState(VK_LEFT) & 0x8000))
+		if (!kin.held(VK_RIGHT) && !kin.held(VK_LEFT))
 			cntr2 = 0;
 
 		cntr2--;
 		if (cntr2 < 0)
 			cntr2 = 0;
+	}
 
-		ren.setDrawGlyph('@');
-		board.draw(ren);
-
-		ren.setDrawGlyph((char)219);
-		block.draw(ren, {block.pos.x + 16, block.pos.y});
-		ren.setDrawColor(WHITE, BG_BLACK);
-
-		drawRectPatch({ {20, 0 }, { 11, 21 } }, ren);
-		drawRectPatch({ {40, 1 }, { 6, 6 } }, ren);
-		ren.setDrawGlyph((char)219);
-		backup.draw(ren, { 41, 2 });
-		ren.drawText("points: " + std::to_string(points), { 40, 10 });
-		ren.drawText("lines: " + std::to_string(linesCleared), { 40, 11 });
-		ren.drawText("level: " + std::to_string(level), {40, 12});
-
+	void calcPoints() 
+	{
 		int cleared = board.checkFullLine();
 		linesCleared += cleared;
 		int reward = 0;
@@ -195,6 +197,68 @@ public:
 			linesCleared = 0;
 		}
 
+
+		lost = board.checkForLoss();
+	}
+
+	void gameUpdate() 
+	{
+		clr = false;
+
+		ren.setDrawColor(WHITE, BG_BLACK);
+
+		ren.setDrawGlyph(' ');
+		ren.drawRect({ {20, 0 }, { 11, 21 } });
+
+		ren.setDrawGlyph(' ');
+		ren.drawRect({ {41, 2 }, { 4, 4 } });
+
+		ren.setDrawColor(WHITE, BG_BLACK);
+
+		calcMovement();
+		calcPoints();
+		board.draw(ren);
+
+		ren.setDrawGlyph((char)219);
+		block.draw(ren, { block.pos.x + 16, block.pos.y });
+		backup.draw(ren, { 41, 2 });
+		ren.setDrawColor(WHITE, BG_BLACK);
+
+		drawRectPatch({ {20, 0 }, { 11, 21 } }, ren);
+		drawRectPatch({ {40, 1 }, { 6, 6 } }, ren);
+		ren.setDrawGlyph((char)219);
+		ren.drawText("points: " + std::to_string(points), { 40, 10 });
+		ren.drawText("lines: " + std::to_string(linesCleared), { 40, 11 });
+		ren.drawText("level: " + std::to_string(level), { 40, 12 });
+
+	}
+
+	void update()
+	{
+		if (!lost)
+			gameUpdate();
+		else
+		{
+			if (!clr)
+			{
+				ren.clear();
+				clr = true;
+			}
+			ren.drawText("You lost !", { 20, 20 });
+			ren.drawText("Continue? Y/N", { 18, 21 });
+
+			if (kin.held('Y')) 
+			{
+				lost = false;
+				board.clear();
+				randomBlocks();
+			}
+			else if (kin.held('N')) 
+			{
+				run = false;
+			}
+		}
+
 		ren.present();
 	}
 };
@@ -202,7 +266,7 @@ public:
 int main()
 {
 	Tetris game;
-	while (true) {
+	while (run) {
 		clock_t frameStart = clock();
 
 		game.update();

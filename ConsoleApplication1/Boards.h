@@ -52,6 +52,15 @@ public:
 	TetrisBoard() {  }
 	~TetrisBoard() {}
 
+	void clear()
+	{
+		for (int i = 0; i < board.size() - 1; i++) 
+		{
+			board.at(i) = (uint16_t)0b1000000000010000;
+		}
+		placedBlocks.clear();
+	}
+
 	bool checkForLoss() 
 	{
 		for (int i = 0; i < 10; i++)
