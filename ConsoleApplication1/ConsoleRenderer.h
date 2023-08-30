@@ -1,5 +1,6 @@
 #pragma once
 #include <stdlib.h>
+#define _WINSOCKAPI_
 #include <Windows.h>
 #include <iostream>
 #include <map>

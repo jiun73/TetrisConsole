@@ -51,6 +51,15 @@
     <ClCompile Include="TetrisGlobal.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="NetworkingX.h">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadPool.h">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadPool.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Rect.h">

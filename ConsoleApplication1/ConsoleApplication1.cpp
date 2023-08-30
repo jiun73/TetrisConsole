@@ -1,6 +1,8 @@
 #include "Boards.h"
 #include "Tetrominos.h" 
 #include "Random.h"
+#include "NetworkingX.h"
+
 
 void drawRectPatch(const Rect& dest, ConsoleRenderer& ren)
 {
@@ -43,7 +45,7 @@ bool run = true;
 
 class Tetris 
 {
-private:
+protected:
 	ConsoleRenderer ren;
 	TetrisBoard board;
 	const V2d_i blocklDF = { 6, - 4 };
@@ -233,7 +235,7 @@ public:
 		lost = board.checkForLoss();
 	}
 
-	void gameUpdate() 
+	virtual void gameUpdate() 
 	{
 		clr = false;
 		if(save != nullptr)
@@ -277,7 +279,7 @@ public:
 
 	}
 
-	void update()
+	virtual  void update()
 	{
 		if (!lost)
 			gameUpdate();
@@ -311,13 +313,73 @@ public:
 	}
 };
 
+class TetrisMultiplayer : public Tetris
+{
+private:
+	NetworkingX net;
+	bool _init = false;
+
+public:
+
+	void update() override
+	{
+		if (!_init)
+			init();
+		else 
+		{
+
+		}
+	}
+
+	void init() 
+	{
+		std::cout << "Host? Y/N" << std::endl;
+		char c;
+		std::cin >> c;
+
+		if (c == 'Y') 
+		{
+			net.host();
+			net.wait_for_peer();
+			_init = true;
+		}
+		else if (c == 'N')
+		{
+			std::cout << "ip? (leave empty for localhost)";
+			std::string s;
+			std::cin >> s;
+			if (s.empty())
+				_init = net.join();
+			else
+				_init = net.join(s);
+		}
+		else
+		{
+			std::cout << "Invalid response!" << std::endl;
+			run = false;
+		}
+	}
+};
+
 int main()
 {
-	Tetris game;
+	std::cout << "1. Singleplayer\n2. Multiplayer\n";
+	int n;
+	std::cin >> n;
+
+	Tetris* game = nullptr;
+
+	if (n == 1)
+		game = new Tetris();
+	else if(n == 2)
+		game = new TetrisMultiplayer();
+	else
+		run = false;
+
 	while (run) {
 		clock_t frameStart = clock();
 
-		game.update();
+		game->update();
 
 		while (clock() - frameStart < 1000 / 60) {} //locks updates at 60 fps
 	}
