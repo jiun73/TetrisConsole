@@ -139,7 +139,7 @@ public:
 	}
 
 	//ajoute les blocks déja placé au Renderer
-	void draw(ConsoleRenderer& ren) 
+	void draw(ConsoleRenderer& ren, int x = 0) 
 	{
 		int i = 0;
 		for (auto& l : placedBlocks)
@@ -148,7 +148,7 @@ public:
 			{
 				V2d_i pos = { p.first, i };
 				ren.setDrawPencil(p.second);
-				ren.drawPixel(pos + V2d_i(16, 0));
+				ren.drawPixel(pos + V2d_i(16 + x, 0));
 			}
 			i++;
 		}

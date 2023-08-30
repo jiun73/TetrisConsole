@@ -116,6 +116,8 @@ public:
 		}
 	}
 
+	virtual void onBlockPlacement(Tetromino& block) {}
+
 	void calcMovement() 
 	{
 		speed = ((15 - level) * 2) + 1;
@@ -133,6 +135,7 @@ public:
 			{
 				block.pos.y--;
 				board.addTetromino(block);
+				onBlockPlacement(block);
 				nextBlock();
 				saveLock = false;
 				return;
@@ -318,8 +321,17 @@ class TetrisMultiplayer : public Tetris
 private:
 	NetworkingX net;
 	bool _init = false;
+	TetrisBoard boardOpp;
 
 public:
+	void onBlockPlacement(Tetromino& block) override
+	{
+		net.send(0);
+		net.send(block.getType());
+		net.send(block.pos);
+		net.send(block.getRotation());
+		net.signal(3);
+	}
 
 	void update() override
 	{
@@ -327,6 +339,26 @@ public:
 			init();
 		else 
 		{
+			while (net.hasSignal(3)) 
+			{
+				int messageType = net.read<int>();
+				int type = net.read<int>();
+				V2d_i pos = net.read<V2d_i>();
+				int rotation = net.read<int>();
+
+				std::cout << type << pos << rotation << std::endl;
+
+				Tetromino nBlock;
+				nBlock.setType(type);
+				nBlock.pos = pos;
+				nBlock.setRotation(rotation);
+				boardOpp.addTetromino(nBlock);
+			}
+
+			boardOpp.draw(ren, 40);
+			ren.setDrawColor(WHITE, BG_BLACK);
+			drawRectPatch({ {60, 0 }, { 11, 21 } }, ren);
+			Tetris::update();
 
 		}
 	}

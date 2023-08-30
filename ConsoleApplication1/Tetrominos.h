@@ -28,6 +28,15 @@ public:
 
 	TetrominoBits getData();
 
+	int getRotation() { return rotation; }
+
+	void setRotation(int r) 
+	{
+		rotation = r;
+		data = getData();
+
+	}
+
 	void rotate(bool left)
 	{
 		if (left)
