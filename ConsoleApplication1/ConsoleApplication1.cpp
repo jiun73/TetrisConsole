@@ -3,6 +3,7 @@
 #include "Random.h"
 #include "NetworkingX.h"
 
+bool peer = false;
 
 void drawRectPatch(const Rect& dest, ConsoleRenderer& ren)
 {
@@ -209,7 +210,7 @@ public:
 			cntr2 = 0;
 	}
 
-	void calcPoints()
+	void calcPoints(Tetris)
 	{
 		int cleared = board.checkFullLine();
 
