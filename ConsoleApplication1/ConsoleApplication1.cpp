@@ -325,8 +325,7 @@ public:
 			ren.drawText("combo: " + std::to_string(combo), { 40, 13 });
 		if (backtoback > 1)
 			ren.drawText("backtoback: " + std::to_string(backtoback), { 40, 14 });
-		//if (lastClearWasTSpin ­> 0)
-			//ren.drawText("tspin!!!!" + std::to_string(lastClearWasTSpin), { 40, 13 + (combo > 1) + (backtoback > 1) });
+		ren.drawText("tspin!!!!" + std::to_string(lastClearWasTSpin), { 40, 13 + (combo > 1) + (backtoback > 1) });
 
 	}
 
