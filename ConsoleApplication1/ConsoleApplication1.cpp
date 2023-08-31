@@ -80,11 +80,10 @@ protected:
 	int tspinVal = 0;
 
 public:
-	Tetris()
-	{
-		randomBlocks();
-	}
+	Tetris() { randomBlocks(); }
 	~Tetris() {}
+
+	bool isPeer = false;
 
 	void randomBlocks() 
 	{
@@ -114,7 +113,6 @@ public:
 		cntr++;
 		if (cntr > speed)
 		{
-			lastMoveWasRotation = false;
 			cntr = 0;
 			block.pos.y++;
 
@@ -127,6 +125,7 @@ public:
 				saveLock = false;
 				return;
 			}
+			lastMoveWasRotation = false;
 		}
 
 		if (kin.held('X') && !lockRotation)
@@ -193,7 +192,7 @@ public:
 			cntr2 = 0;
 	}
 
-	void calcPoints(TetrisBoard& b)
+	void calcPoints(TetrisBoard& b, bool isOpp = false)
 	{
 		int cleared = b.checkFullLine();
 		bool difficult = false;
@@ -233,7 +232,7 @@ public:
 
 		if(cleared && !tspinVal)
 		{
-			sendLines(cleared);
+
 		}
 
 		if(cleared)
@@ -382,7 +381,7 @@ public:
 					nBlock.pos = pos;
 					nBlock.setRotation(rotation);
 					boardOpp.addTetromino(nBlock);
-					calcPoints(boardOpp);
+					calcPoints(boardOpp, true);
 				}
 				else if (messageType == 1) {
 					int garbage = net.read<int>();

@@ -101,14 +101,20 @@ public:
 	void addGarbageLine(int holex)
 	{
 		ConsolePixel p;
-		p.glyph = 177;
-		p.fg = GRAY;
-		p.bg = BG_DARK_GRAY;
+		p.glyph = (char)177;
+		p.fg = DARK_GRAY;
+		p.bg = BG_GRAY;
+		uint16_t line = ~(1 << (14 - holex)) & 0b1111111111110000;
 
-		board.insert(board.end() - 2, 0b1011111111110000);
-		for (int i = 0; i < 10; i++)
+		board.pop_front();
+		board.insert(board.end() - 1, line);
+
+		if(!placedBlocks.empty())
+			placedBlocks.pop_front();
+		placedBlocks.resize(40);
+		for (int i = 0; i < 11; i++)
 			if (i != holex)
-				placedBlocks[board.size() - 3].emplace(i, p);
+				placedBlocks[board.size() - 10 - 2].emplace(16 - (i + 2), p);
 	}
 
 	//ajoute la représentation 16-bits d'un tétromino à board, retourne si un T-spin a été trouvé
@@ -181,6 +187,24 @@ public:
 	//ajoute les blocks déja placé au Renderer
 	void draw(ConsoleRenderer& ren, int x = 0) 
 	{
+		ren.setDrawColor(RED, BG_DARK_RED);
+		ren.setDrawGlyph('@');
+		int y = 0;
+		for (auto l : board)
+		{
+			for (int i = 0; i < 16; i++)
+			{
+				uint16_t mask = (1 << i);
+				bool current = l & mask;
+				if (current)
+				{
+					V2d_i r = { (i % 16) + 16, y - 10 };
+					ren.drawPixel(r);
+				}
+			}
+			y++;
+		}
+
 		int i = 0;
 		for (auto& l : placedBlocks)
 		{

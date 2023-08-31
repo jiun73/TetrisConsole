@@ -106,7 +106,7 @@ public:
 	T read()
 	{
 		T data = *(T*)buffer.front();
-		std::cout << "reading..." << std::bitset<sizeof(data) * 8>(*(size_t*)(&data)) << std::endl;
+		//std::cout << "reading..." << std::bitset<sizeof(data) * 8>(*(size_t*)(&data)) << std::endl;
 		delete buffer.front();
 		buffer.pop_front();
 		return data;
@@ -171,7 +171,7 @@ public:
 
 	void signal(size_t channel = 0)
 	{
-		std::cout << "signaling..." << channel;
+		//std::cout << "signaling..." << channel;
 		send<size_t>(channel, true);
 	}
 
@@ -181,7 +181,7 @@ public:
 	template<typename T>
 	void send(T data, bool signal = false)
 	{
-		std::cout << "sending..." << std::bitset<sizeof(data) * 8>(*(size_t*)(&data)) << std::endl;
+		//std::cout << "sending..." << std::bitset<sizeof(data) * 8>(*(size_t*)(&data)) << std::endl;
 		enet_uint8* bytes = new enet_uint8[sizeof(data) + 1];
 		memcpy(bytes + 1, &data, sizeof(data));
 		memcpy(bytes, &signal, sizeof(bool));
