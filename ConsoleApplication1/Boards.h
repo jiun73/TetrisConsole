@@ -53,6 +53,15 @@ public:
 	TetrisBoard() {  }
 	~TetrisBoard() {}
 
+	bool isEmpty()
+	{
+		bool found = true;
+		for (int i = 0; i < board.size() - 1; i++)
+			if (board.at(i) != (uint16_t)0b1000000000010000)
+				found = false;
+		return found;
+	}
+
 	//réinitialise l'objet
 	void clear()
 	{
@@ -89,8 +98,38 @@ public:
 		return false;
 	}
 
-	//ajoute la représentation 16-bits d'un tétromino à board
-	void addTetromino(Tetromino& block) {
+	void addGarbageLine(int holex)
+	{
+		ConsolePixel p;
+		p.glyph = 177;
+		p.fg = GRAY;
+		p.bg = BG_DARK_GRAY;
+
+		board.insert(board.end() - 2, 0b1011111111110000);
+		for (int i = 0; i < 10; i++)
+			if (i != holex)
+				placedBlocks[board.size() - 3].emplace(i, p);
+	}
+
+	//ajoute la représentation 16-bits d'un tétromino à board, retourne si un T-spin a été trouvé
+	int addTetromino(Tetromino& block, bool lastMoveWasRotation = false) {
+		
+		int r = 0;
+		if (block.getType() == 4 && lastMoveWasRotation)
+		{
+			uint16_t lineTop = board.at(block.pos.y + 10);
+			uint16_t lineBottom = board.at(block.pos.y + 10 + 2);
+
+			int corners = 0;
+			if (lineTop & (1 << (16 - block.pos.x))) corners++;
+			if (lineTop & (1 << (16 - (block.pos.x + 2)))) corners++;
+			if (lineBottom & (1 << (16 - block.pos.x))) corners++;
+			if (lineBottom & (1 << (16 - (block.pos.x + 2)))) corners++;
+
+			if (corners > 2)
+				r = 1;
+		}
+
 		for (int i = 0; i < 4; i++)
 		{
 			int y = i + block.pos.y + 10;
@@ -108,6 +147,7 @@ public:
 				placedBlocks[l.first.y].emplace(l.first.x, l.second);
 			}
 		}
+		return r;
 	}
 
 	//enlève un ligne et descent le reste

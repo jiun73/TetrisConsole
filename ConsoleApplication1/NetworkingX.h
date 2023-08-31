@@ -6,7 +6,7 @@
 #include <map>
 #include <bitset>
 #include <vector>
-#include <enet/enet.h>
+#include <enet\enet.h>
 
 enum
 {

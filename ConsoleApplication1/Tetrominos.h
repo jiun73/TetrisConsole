@@ -5,6 +5,8 @@
 
 extern std::array<TetrominoBits, 4 * 7> tetrominos;
 
+class TetrisBoard;
+
 class Tetromino
 {
 	std::vector<fgConsoleColors> colors =
@@ -28,29 +30,18 @@ public:
 
 	TetrominoBits getData();
 
+	void resolveBlockCollisionRotation(TetrisBoard& board);
+
 	int getRotation() { return rotation; }
 
 	void setRotation(int r) 
 	{
 		rotation = r;
 		data = getData();
-
 	}
 
-	void rotate(bool left)
-	{
-		if (left)
-			rotation--;
-		else
-			rotation++;
-
-		if (rotation < 0)
-			rotation = 3;
-		if (rotation > 3)
-			rotation = 0;
-
-		data = getData();
-	}
+	void rotate(bool left, TetrisBoard& board, bool noCollision = false);
+	void move(bool left, TetrisBoard& board);
 
 	int getType() 
 	{

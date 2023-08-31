@@ -62,6 +62,8 @@ protected:
 	bool saveLock = false;
 
 	bool flash = false;
+	bool firstPlaced = false;
+	bool lastMoveWasRotation = false;
 
 	Tetromino block;
 	Tetromino backup;
@@ -72,6 +74,10 @@ protected:
 	int linesCleared = 0;
 	int level = 0;
 	int points = 0;
+
+	int combo = -1;
+	int backtoback = -1;
+	int tspinVal = 0;
 
 public:
 	Tetris()
@@ -94,30 +100,9 @@ public:
 		backup.setType(rng.range(0, 6));
 	}
 
-	void testBlockCollisionRotation()
-	{
-		if (board.isColliding(block))
-		{
-			while (true) //shitty collision detection for rotations
-			{
-				block.pos.x--; //try moving the block left 
-				if (!board.isColliding(block)) break; //if it works, break
-				block.pos.x += 2; //try moving to the right
-				if (!board.isColliding(block)) break; //if it works, break
-				block.pos.x++; //try 2 to the right
-				if (!board.isColliding(block)) break; //if it works, break
-				block.pos.x -= 4; //try 2 to the left
-				if (!board.isColliding(block)) break; //if it works, break
+	virtual void onBlockPlacement(Tetromino& block) { firstPlaced = true; }
 
-				while (board.isColliding(block)) //is all else fails, rotate until it works
-					block.rotate(1);
-				break;
-
-			}
-		}
-	}
-
-	virtual void onBlockPlacement(Tetromino& block) {}
+	virtual void sendLines(int n) {}
 
 	void calcMovement() 
 	{
@@ -129,13 +114,14 @@ public:
 		cntr++;
 		if (cntr > speed)
 		{
+			lastMoveWasRotation = false;
 			cntr = 0;
 			block.pos.y++;
 
 			while (board.isColliding(block))
 			{
 				block.pos.y--;
-				board.addTetromino(block);
+				tspinVal = board.addTetromino(block, lastMoveWasRotation);
 				onBlockPlacement(block);
 				nextBlock();
 				saveLock = false;
@@ -145,15 +131,15 @@ public:
 
 		if (kin.held('X') && !lockRotation)
 		{
-			block.rotate(1);
-			testBlockCollisionRotation();
+			block.rotate(1, board);
+			lastMoveWasRotation = true;
 			lockRotation = true;
 		}
 
 		if (kin.held('Z') && !lockRotation)
 		{
-			block.rotate(0);
-			testBlockCollisionRotation();
+			block.rotate(0, board);
+			lastMoveWasRotation = true;
 			lockRotation = true;
 		}
 
@@ -162,20 +148,16 @@ public:
 
 		if (kin.held(VK_LEFT) && cntr2 == 0)
 		{
+			lastMoveWasRotation = false;
+			block.move(1, board);
 			cntr2 = cooldown;
-			block.pos.x--;
-
-			while (board.isColliding(block))
-				block.pos.x++;
 		}
 
 		if (kin.held(VK_RIGHT) && cntr2 == 0)
 		{
+			lastMoveWasRotation = false;
+			block.move(0, board);
 			cntr2 = cooldown;
-			block.pos.x++;
-
-			if (board.isColliding(block))
-				block.pos.x--;
 		}
 
 		if (!kin.held(VK_RIGHT) && !kin.held(VK_LEFT))
@@ -183,6 +165,7 @@ public:
 
 		if (kin.held('C') && !saveLock)
 		{
+			lastMoveWasRotation = false;
 			Tetromino temp;
 			bool wasNull = true;
 			if (save != nullptr)
@@ -210,12 +193,27 @@ public:
 			cntr2 = 0;
 	}
 
-	void calcPoints(Tetris)
+	void calcPoints(TetrisBoard& b)
 	{
-		int cleared = board.checkFullLine();
+		int cleared = b.checkFullLine();
+		bool difficult = false;
 
 		if (cleared)
+		{
 			flash = true;
+			combo++;
+
+			if (cleared == 4)
+				difficult = true;
+		}
+		else
+			combo = -1;
+
+		if (tspinVal)
+		{
+			difficult = true;
+			tspinVal = 0;
+		}
 
 		linesCleared += cleared;
 		int reward = 0;
@@ -227,7 +225,19 @@ public:
 		case 4: reward = 800; break;
 		default: reward = 0; break;
 		}
-		points += reward;
+
+		if (difficult) 
+			backtoback++;
+		else
+			backtoback = -1;
+
+		if(cleared && !tspinVal)
+		{
+			sendLines(cleared);
+		}
+
+		if(cleared)
+			points += (reward + (50 * combo * level) ) * ((backtoback > 0) ? 1.5 : 1.0);
 
 		if (linesCleared >= 10)
 		{
@@ -235,8 +245,7 @@ public:
 			linesCleared = 0;
 		}
 
-
-		lost = board.checkForLoss();
+		lost = b.checkForLoss();
 	}
 
 	virtual void gameUpdate() 
@@ -264,8 +273,14 @@ public:
 		ren.setDrawColor(WHITE, BG_BLACK);
 
 		calcMovement();
-		calcPoints();
+		calcPoints(board);
 		board.draw(ren);
+
+		if (firstPlaced && board.isEmpty())
+		{
+
+			firstPlaced = false;
+		}
 
 		ren.setDrawGlyph((char)219);
 		block.draw(ren, { block.pos.x + 16, block.pos.y });
@@ -280,10 +295,14 @@ public:
 		ren.drawText("points: " + std::to_string(points), { 40, 10 });
 		ren.drawText("lines: " + std::to_string(linesCleared), { 40, 11 });
 		ren.drawText("level: " + std::to_string(level), { 40, 12 });
+		if(combo > 1)
+			ren.drawText("combo: " + std::to_string(combo), { 40, 13 });
+		if (backtoback > 1)
+			ren.drawText("backtoback: " + std::to_string(backtoback), { 40, 14 });
 
 	}
 
-	virtual  void update()
+	virtual void update()
 	{
 		if (!lost)
 			gameUpdate();
@@ -325,6 +344,13 @@ private:
 	TetrisBoard boardOpp;
 
 public:
+	void sendLines(int n) override
+	{
+		net.send(1);
+		net.send(n);
+		net.signal(3);
+	}
+
 	void onBlockPlacement(Tetromino& block) override
 	{
 		net.send(0);
@@ -343,19 +369,31 @@ public:
 			while (net.hasSignal(3)) 
 			{
 				int messageType = net.read<int>();
-				int type = net.read<int>();
-				V2d_i pos = net.read<V2d_i>();
-				int rotation = net.read<int>();
 
-				std::cout << type << pos << rotation << std::endl;
+				if (messageType == 0) {
+					int type = net.read<int>();
+					V2d_i pos = net.read<V2d_i>();
+					int rotation = net.read<int>();
 
-				Tetromino nBlock;
-				nBlock.setType(type);
-				nBlock.pos = pos;
-				nBlock.setRotation(rotation);
-				boardOpp.addTetromino(nBlock);
+					std::cout << type << pos << rotation << std::endl;
+
+					Tetromino nBlock;
+					nBlock.setType(type);
+					nBlock.pos = pos;
+					nBlock.setRotation(rotation);
+					boardOpp.addTetromino(nBlock);
+					calcPoints(boardOpp);
+				}
+				else if (messageType == 1) {
+					int garbage = net.read<int>();
+					board.addGarbageLine(garbage);
+				}
+
 			}
 
+			ren.setDrawColor(BLACK, BG_BLACK);
+			ren.setDrawGlyph(' ');
+			ren.drawRect({ {60, 0 }, { 11, 21 } });
 			boardOpp.draw(ren, 40);
 			ren.setDrawColor(WHITE, BG_BLACK);
 			drawRectPatch({ {60, 0 }, { 11, 21 } }, ren);
@@ -414,6 +452,6 @@ int main()
 
 		game->update();
 
-		while (clock() - frameStart < 1000 / 60) {} //locks updates at 60 fps
+		while (clock() - frameStart < 1000 / 30) {} //locks updates at 60 fps
 	}
 }
