@@ -194,42 +194,34 @@ public:
 			cntr2 = 0;
 	}
 
-	void calcPoints(TetrisBoard& b, bool isOpp = false)
+	void calcPoints(TetrisBoard& b, int& _cleared, int& _points, int& tspin, int& _combo, int& _b2b, int& _linesToSend, bool& _loss, int _level)
 	{
-		int cleared = b.checkFullLine();
+		_cleared = b.checkFullLine();
 		bool difficult = false;
 
-		if (cleared)
-		{
-			flash = true;
-			combo++;
+		if (tspin)
+			difficult = true;
 
-			if (cleared == 4)
+		if (_cleared)
+		{
+			//flash = true;
+			_combo++;
+
+			if (_cleared == 4)
 				difficult = true;
 		}
 		else
-			combo = -1;
+			_combo = -1;
 
-		if (tspinVal && cleared)
-		{
-			lastClearWasTSpin = cleared;
-		}
-		else if (!tspinVal && cleared)
-		{
-			lastClearWasTSpin = false;
-		}
+		//if (tspin && _cleared)
+		//	wasTspin = _cleared;
+		//else if (!tspin && _cleared)
+		//	wasTspin = false;
 
-		if (tspinVal)
-		{
-			difficult = true;
-			tspinVal = 0;
-		}
-
-		linesCleared += cleared;
 		int reward = 0;
-		if (!tspinVal)
+		if (!tspin)
 		{
-			switch (cleared)
+			switch (_cleared)
 			{
 			case 1: reward = 100; break;
 			case 2: reward = 300; break;
@@ -240,36 +232,35 @@ public:
 		}
 		else
 		{
-			switch (cleared)
+			switch (_cleared)
 			{
-			case 1: reward = 100; break;
-			case 2: reward = 300; break;
-			case 3: reward = 500; break;
-			case 4: reward = 800; break;
-			default: reward = 0; break;
+			case 1: reward = 800; break;
+			case 2: reward = 1200; break;
+			case 3: reward = 1600; break;
+			default: reward = 400; break;
 			}
 		}
 
 		if (difficult) 
-			backtoback++;
+			_b2b++;
 		else
-			backtoback = -1;
+			_b2b = -1;
 
-		if(cleared && !tspinVal)
+		if(_cleared && !tspin)
 		{
-
+			_linesToSend = _cleared;
 		}
 
-		if(cleared)
-			points += (reward + (50 * combo * level) ) * ((backtoback > 0) ? 1.5 : 1.0);
+		if(_cleared)
+			_points += (reward + (50 * _combo * _level) ) * ((_b2b > 0) ? 1.5 : 1.0);
 
-		if (linesCleared >= 10)
+		if (tspin)
 		{
-			level++;
-			linesCleared = 0;
+			difficult = true;
+			tspin = 0;
 		}
 
-		lost = b.checkForLoss();
+		_loss = b.checkForLoss();
 	}
 
 	virtual void gameUpdate() 
@@ -299,14 +290,31 @@ public:
 		ren.setDrawColor(WHITE, BG_BLACK);
 
 		calcMovement();
-		calcPoints(board);
+		int cleared = 0;
+		int linesToSend = 0;
+		bool wasTspin = tspinVal;
+		calcPoints(board, cleared, points, tspinVal, combo, backtoback, linesToSend, lost, level);
+
+		if (wasTspin && cleared)
+			lastClearWasTSpin = cleared;
+		else if (!wasTspin && cleared)
+			lastClearWasTSpin = false;
+
+		if (linesCleared >= 10)
+		{
+			level++;
+			linesCleared = 0;
+		}
+
+		if (cleared)
+			flash = true;
+
+
+		linesCleared += cleared;
 		board.draw(ren);
 
 		if (firstPlaced && board.isEmpty())
-		{
-
 			firstPlaced = false;
-		}
 
 		ren.setDrawGlyph((char)219);
 		block.draw(ren, { block.pos.x + 16, block.pos.y });
@@ -325,7 +333,8 @@ public:
 			ren.drawText("combo: " + std::to_string(combo), { 40, 13 });
 		if (backtoback > 1)
 			ren.drawText("backtoback: " + std::to_string(backtoback), { 40, 14 });
-		ren.drawText("tspin!!!!" + std::to_string(lastClearWasTSpin), { 40, 13 + (combo > 1) + (backtoback > 1) });
+		if(lastClearWasTSpin > 0)
+			ren.drawText(std::to_string(lastClearWasTSpin) + " T-Spin", {40, 13 + (combo > 1) + (backtoback > 1)});
 
 	}
 
@@ -384,6 +393,7 @@ public:
 		net.send(block.getType());
 		net.send(block.pos);
 		net.send(block.getRotation());
+		net.send(tspinVal);
 		net.signal(3);
 	}
 
@@ -401,19 +411,29 @@ public:
 					int type = net.read<int>();
 					V2d_i pos = net.read<V2d_i>();
 					int rotation = net.read<int>();
-
-					std::cout << type << pos << rotation << std::endl;
+					int tspinValue = net.read<int>();
 
 					Tetromino nBlock;
 					nBlock.setType(type);
 					nBlock.pos = pos;
 					nBlock.setRotation(rotation);
 					boardOpp.addTetromino(nBlock);
-					calcPoints(boardOpp, true);
+
+					int cleared = 0;
+					int linesToSend = 0;
+					bool wasTspin = tspinVal;
+					int _points = 0;
+					int _combo = 0;
+					int _b2b = 0;
+					bool loss = 0;
+					calcPoints(boardOpp, cleared, _points, tspinValue, _combo, _b2b, linesToSend, loss, 0);
+					//sendLines(linesToSend);
+					//boardOpp.addGarbageLine(linesToSend);
+
 				}
 				else if (messageType == 1) {
 					int garbage = net.read<int>();
-					board.addGarbageLine(garbage);
+					//board.addGarbageLine(garbage);
 				}
 
 			}
