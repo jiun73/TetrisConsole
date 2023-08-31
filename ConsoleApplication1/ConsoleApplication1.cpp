@@ -64,6 +64,7 @@ protected:
 	bool flash = false;
 	bool firstPlaced = false;
 	bool lastMoveWasRotation = false;
+	int  lastClearWasTSpin = 0;
 
 	Tetromino block;
 	Tetromino backup;
@@ -120,6 +121,7 @@ public:
 			{
 				block.pos.y--;
 				tspinVal = board.addTetromino(block, lastMoveWasRotation);
+				std::cout << tspinVal << std::endl;
 				onBlockPlacement(block);
 				nextBlock();
 				saveLock = false;
@@ -208,6 +210,15 @@ public:
 		else
 			combo = -1;
 
+		if (tspinVal && cleared)
+		{
+			lastClearWasTSpin = cleared;
+		}
+		else if (!tspinVal && cleared)
+		{
+			lastClearWasTSpin = false;
+		}
+
 		if (tspinVal)
 		{
 			difficult = true;
@@ -216,13 +227,27 @@ public:
 
 		linesCleared += cleared;
 		int reward = 0;
-		switch (cleared)
+		if (!tspinVal)
 		{
-		case 1: reward = 100; break;
-		case 2: reward = 300; break;
-		case 3: reward = 500; break;
-		case 4: reward = 800; break;
-		default: reward = 0; break;
+			switch (cleared)
+			{
+			case 1: reward = 100; break;
+			case 2: reward = 300; break;
+			case 3: reward = 500; break;
+			case 4: reward = 800; break;
+			default: reward = 0; break;
+			}
+		}
+		else
+		{
+			switch (cleared)
+			{
+			case 1: reward = 100; break;
+			case 2: reward = 300; break;
+			case 3: reward = 500; break;
+			case 4: reward = 800; break;
+			default: reward = 0; break;
+			}
 		}
 
 		if (difficult) 
@@ -249,6 +274,8 @@ public:
 
 	virtual void gameUpdate() 
 	{
+		std::cout << block.getType() << std::endl;
+
 		clr = false;
 		if(save != nullptr)
 			save->pos = 0;
@@ -298,6 +325,8 @@ public:
 			ren.drawText("combo: " + std::to_string(combo), { 40, 13 });
 		if (backtoback > 1)
 			ren.drawText("backtoback: " + std::to_string(backtoback), { 40, 14 });
+		//if (lastClearWasTSpin ­> 0)
+			//ren.drawText("tspin!!!!" + std::to_string(lastClearWasTSpin), { 40, 13 + (combo > 1) + (backtoback > 1) });
 
 	}
 

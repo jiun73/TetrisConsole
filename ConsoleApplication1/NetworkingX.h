@@ -188,7 +188,7 @@ public:
 
 		ENetPacket* packet = enet_packet_create((void*)(bytes), sizeof(data) + 1, ENET_PACKET_FLAG_RELIABLE);
 
-		delete bytes;
+		delete[] bytes;
 
 		if (enet_peer_send(peer, 0, packet) != 0)
 			puts("Failed to send packet");

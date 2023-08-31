@@ -40,9 +40,9 @@ private:
 		(uint16_t)0b1000000000010000,
 		(uint16_t)0b1000000000010000,
 		(uint16_t)0b1000000000010000,
-		(uint16_t)0b1000000000010000,
-		(uint16_t)0b1000000000010000,
-		(uint16_t)0b1000000000010000,
+		(uint16_t)0b1000010000010000,
+		(uint16_t)0b1111100011110000,
+		(uint16_t)0b1111110111110000,
 		(uint16_t)0b1111111111111111,
 	};
 
@@ -119,7 +119,6 @@ public:
 
 	//ajoute la représentation 16-bits d'un tétromino à board, retourne si un T-spin a été trouvé
 	int addTetromino(Tetromino& block, bool lastMoveWasRotation = false) {
-		
 		int r = 0;
 		if (block.getType() == 4 && lastMoveWasRotation)
 		{
@@ -127,10 +126,10 @@ public:
 			uint16_t lineBottom = board.at(block.pos.y + 10 + 2);
 
 			int corners = 0;
-			if (lineTop & (1 << (16 - block.pos.x))) corners++;
-			if (lineTop & (1 << (16 - (block.pos.x + 2)))) corners++;
-			if (lineBottom & (1 << (16 - block.pos.x))) corners++;
-			if (lineBottom & (1 << (16 - (block.pos.x + 2)))) corners++;
+			if (lineTop & (1 << (17 - block.pos.x))) corners++;
+			if (lineTop & (1 << (17 - (block.pos.x + 2)))) corners++;
+			if (lineBottom & (1 << (17 - block.pos.x))) corners++;
+			if (lineBottom & (1 << (17 - (block.pos.x + 2)))) corners++;
 
 			if (corners > 2)
 				r = 1;
