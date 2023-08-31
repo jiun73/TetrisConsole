@@ -102,7 +102,7 @@ public:
 
 	virtual void onBlockPlacement(Tetromino& block) { firstPlaced = true; }
 
-	virtual void sendLines(int n) {}
+	virtual void sendLines(std::vector<int>& list) {}
 
 	void calcMovement() 
 	{
@@ -194,7 +194,15 @@ public:
 			cntr2 = 0;
 	}
 
-	void calcPoints(TetrisBoard& b, int& _cleared, int& _points, int& tspin, int& _combo, int& _b2b, int& _linesToSend, bool& _loss, int _level)
+	std::vector<int> getGarbage(int n) 
+	{
+		std::vector<int> ret;
+		for (int i = 0; i < n; i++)
+			ret.push_back(rng.range(0, 9));
+		return ret;
+	}
+
+	void calcPoints(TetrisBoard& b, int& _cleared, int& _points, int& tspin, int& _combo, int& _b2b, int& _linesToSend, bool& _loss, int _level, bool& _first)
 	{
 		_cleared = b.checkFullLine();
 		bool difficult = false;
@@ -204,7 +212,6 @@ public:
 
 		if (_cleared)
 		{
-			//flash = true;
 			_combo++;
 
 			if (_cleared == 4)
@@ -212,11 +219,6 @@ public:
 		}
 		else
 			_combo = -1;
-
-		//if (tspin && _cleared)
-		//	wasTspin = _cleared;
-		//else if (!tspin && _cleared)
-		//	wasTspin = false;
 
 		int reward = 0;
 		if (!tspin)
@@ -248,8 +250,27 @@ public:
 
 		if(_cleared && !tspin)
 		{
-			_linesToSend = _cleared;
+			
+			switch (_cleared)
+			{
+			case 1:_linesToSend = 0; break;
+			case 2:_linesToSend = 1; break;
+			case 3:_linesToSend = 2; break;
+			case 4:_linesToSend = 4; break;
+			}
 		}
+		else if (_cleared && tspin) 
+		{
+			switch (_cleared)
+			{
+			case 1:_linesToSend = 2; break;
+			case 2:_linesToSend = 4; break;
+			case 3:_linesToSend = 6; break;
+			}
+		}
+
+		if (_linesToSend > 0)
+			_linesToSend = _linesToSend + _b2b;
 
 		if(_cleared)
 			_points += (reward + (50 * _combo * _level) ) * ((_b2b > 0) ? 1.5 : 1.0);
@@ -258,6 +279,12 @@ public:
 		{
 			difficult = true;
 			tspin = 0;
+		}
+
+		if (_first && board.isEmpty())
+		{
+			_linesToSend = 10 + _cleared;
+			_first = false;
 		}
 
 		_loss = b.checkForLoss();
@@ -293,7 +320,7 @@ public:
 		int cleared = 0;
 		int linesToSend = 0;
 		bool wasTspin = tspinVal;
-		calcPoints(board, cleared, points, tspinVal, combo, backtoback, linesToSend, lost, level);
+		calcPoints(board, cleared, points, tspinVal, combo, backtoback, linesToSend, lost, level, firstPlaced);
 
 		if (wasTspin && cleared)
 			lastClearWasTSpin = cleared;
@@ -312,9 +339,6 @@ public:
 
 		linesCleared += cleared;
 		board.draw(ren);
-
-		if (firstPlaced && board.isEmpty())
-			firstPlaced = false;
 
 		ren.setDrawGlyph((char)219);
 		block.draw(ren, { block.pos.x + 16, block.pos.y });
@@ -380,10 +404,12 @@ private:
 	TetrisBoard boardOpp;
 
 public:
-	void sendLines(int n) override
+	void sendLines(std::vector<int>& list) override
 	{
 		net.send(1);
-		net.send(n);
+		net.send(list.size());
+		for (auto& l : list)
+			net.send(l);
 		net.signal(3);
 	}
 
@@ -394,6 +420,7 @@ public:
 		net.send(block.pos);
 		net.send(block.getRotation());
 		net.send(tspinVal);
+		net.send(firstPlaced);
 		net.signal(3);
 	}
 
@@ -412,6 +439,7 @@ public:
 					V2d_i pos = net.read<V2d_i>();
 					int rotation = net.read<int>();
 					int tspinValue = net.read<int>();
+					bool fplaced = net.read<bool>();
 
 					Tetromino nBlock;
 					nBlock.setType(type);
@@ -426,14 +454,20 @@ public:
 					int _combo = 0;
 					int _b2b = 0;
 					bool loss = 0;
-					calcPoints(boardOpp, cleared, _points, tspinValue, _combo, _b2b, linesToSend, loss, 0);
-					//sendLines(linesToSend);
-					//boardOpp.addGarbageLine(linesToSend);
+					calcPoints(boardOpp, cleared, _points, tspinValue, _combo, _b2b, linesToSend, loss, 0, fplaced);
+
+					std::vector<int> list = getGarbage(linesToSend);
+					sendLines(list);
+					board.addGarbagelineList(list);
 
 				}
 				else if (messageType == 1) {
-					int garbage = net.read<int>();
-					//board.addGarbageLine(garbage);
+					size_t size = net.read<size_t>();
+					std::vector<int> list;
+					for (int i = 0; i < size; i++)
+						list.push_back(net.read<int>());
+					
+					boardOpp.addGarbagelineList(list);
 				}
 
 			}

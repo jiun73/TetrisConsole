@@ -98,6 +98,12 @@ public:
 		return false;
 	}
 
+	void addGarbagelineList(std::vector<int>& list) 
+	{
+		for (auto& l : list)
+			addGarbageLine(l);
+	}
+
 	void addGarbageLine(int holex)
 	{
 		ConsolePixel p;
