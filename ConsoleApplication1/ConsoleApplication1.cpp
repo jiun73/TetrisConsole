@@ -84,11 +84,25 @@ protected:
 	int backtoback = -1;
 	int tspinVal = 0;
 
+	std::vector<int> garbageBuffer;
+
 public:
 	Tetris() { randomBlocks(); }
 	~Tetris() {}
 
 	bool isPeer = false;
+
+	void pushGarbageBuffer() 
+	{
+		sendLines(garbageBuffer);
+		board.addGarbagelineList(garbageBuffer);
+	}
+
+	void addGarbageToBuffer(std::vector<int>& list)
+	{
+		for (auto& l : list)
+			garbageBuffer.push_back(l);
+	}
 
 	void fillNextPieces() 
 	{
@@ -113,6 +127,7 @@ public:
 
 	void nextBlock() 
 	{
+		pushGarbageBuffer();
 		block = backup;
 		block.pos = blocklDF;
 		if(nextPieces.empty())
@@ -476,14 +491,14 @@ public:
 		if (!clr)
 		{
 			ren.clear();
+			losses++;
+
 			clr = true;
 		}
 
-		losses++;
-
 		std::stringstream ss;
 		ss << wins << " wins and " << losses << " losses";
-		ren.drawText(ss.str(), { 20, 20 });
+		ren.drawText(ss.str(), { 20, 23 });
 
 		ren.drawText("You lose >:)", { 20, 20 });
 		ren.drawText("Rematch? Y/N", { 17, 21 });
@@ -513,18 +528,18 @@ public:
 		if (!clr)
 		{
 			ren.clear();
+
+			wins++;
+
 			clr = true;
 		}
 
 		std::stringstream ss;
 		ss << wins << " wins and " << losses << " losses";
-		ren.drawText(ss.str(), { 20, 20 });
+		ren.drawText(ss.str(), { 20, 23 });
 
 		ren.drawText("You WIN >:)", { 20, 20 });
 		ren.drawText("Rematch? Y/N", { 17, 21 });
-
-		wins++;
-
 		if (kin.held('Y'))
 		{
 			net.send(3);
@@ -580,8 +595,9 @@ public:
 						calcPoints(boardOpp, cleared, _points, tspinValue, _combo, _b2b, linesToSend, loss, 0, fplaced);
 
 						std::vector<int> list = getGarbage(linesToSend);
-						sendLines(list);
-						board.addGarbagelineList(list);
+						//sendLines(list);
+						//board.addGarbagelineList(list);
+						addGarbageToBuffer(list);
 
 						if (loss) //means that we win
 						{
