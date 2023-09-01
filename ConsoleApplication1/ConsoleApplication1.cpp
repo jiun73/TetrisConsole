@@ -4,6 +4,7 @@
 #include "NetworkingX.h"
 
 bool peer = false;
+bool restart = false;
 
 void drawRectPatch(const Rect& dest, ConsoleRenderer& ren)
 {
@@ -49,6 +50,7 @@ class Tetris
 protected:
 	ConsoleRenderer ren;
 	TetrisBoard board;
+	std::list<int> nextPieces;
 	const V2d_i blocklDF = { 6, - 4 };
 	int cntr = 0;
 	int speed = 10;
@@ -86,18 +88,35 @@ public:
 
 	bool isPeer = false;
 
+	void fillNextPieces() 
+	{
+		std::vector<int> all = {0,1,2,3,4,5,6};
+		for (int i = 0; i < 7; i++)
+		{
+			int n = rng.range(0, all.size() - 1);
+			nextPieces.push_back(all.at(n));
+			all.erase(all.begin() + n);
+		}
+	}
+
 	void randomBlocks() 
 	{
+		fillNextPieces();
 		block.pos = blocklDF;
-		block.setType(rng.range(0, 6));
-		backup.setType(rng.range(0, 6));
+		block.setType(nextPieces.back());
+		nextPieces.pop_back();
+		backup.setType(nextPieces.back());
+		nextPieces.pop_back();
 	}
 
 	void nextBlock() 
 	{
 		block = backup;
 		block.pos = blocklDF;
-		backup.setType(rng.range(0, 6));
+		if(nextPieces.empty())
+			fillNextPieces();
+		backup.setType(nextPieces.back());
+		nextPieces.pop_back();
 	}
 
 	virtual void onBlockPlacement(Tetromino& block) { firstPlaced = true; }
@@ -269,7 +288,7 @@ public:
 			}
 		}
 
-		if (_linesToSend > 0)
+		if (_linesToSend > 0 && _b2b > 0)
 			_linesToSend = _linesToSend + _b2b;
 
 		if(_cleared)
@@ -292,8 +311,6 @@ public:
 
 	virtual void gameUpdate() 
 	{
-		std::cout << block.getType() << std::endl;
-
 		clr = false;
 		if(save != nullptr)
 			save->pos = 0;
@@ -335,7 +352,6 @@ public:
 
 		if (cleared)
 			flash = true;
-
 
 		linesCleared += cleared;
 		board.draw(ren);
@@ -479,6 +495,14 @@ public:
 			ren.setDrawColor(WHITE, BG_BLACK);
 			drawRectPatch({ {60, 0 }, { 11, 21 } }, ren);
 			Tetris::update();
+
+			if (net.disconnected())
+			{
+				ren.clear();
+				std::cout << "Peer disconnected\n";
+				system("pause");
+				run = false;
+			}
 
 		}
 	}

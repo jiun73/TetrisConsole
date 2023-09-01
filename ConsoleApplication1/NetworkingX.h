@@ -25,6 +25,7 @@ private:
 	std::list<enet_uint8*> buffer;
 	std::map<size_t, size_t> signals;
 	ENetPeer* peer;
+	bool onDisconnect = false;
 
 public:
 	NetworkingX()
@@ -33,7 +34,19 @@ public:
 			fprintf(stderr, "An error occurred while initializing ENet.\n");
 		atexit(enet_deinitialize);
 	}
-	~NetworkingX() {  }
+	~NetworkingX() 
+	{ 
+		enet_host_destroy(client);
+		threads.stop();
+	}
+
+	bool disconnected() 
+	{
+		bool d = onDisconnect;
+		if (d)
+			onDisconnect = false;
+		return d;
+	}
 
 	template<typename T>
 	void recvec(std::vector<T>& vec)
@@ -97,7 +110,7 @@ public:
 			return false;
 		}
 
-		std::cout << "found signal!" << channel << std::endl;
+		/*std::cout << "found signal!" << channel << std::endl;*/
 		signals[channel]--;
 		return true;
 	}
@@ -149,6 +162,7 @@ public:
 		case ENET_EVENT_TYPE_DISCONNECT:
 			std::cout << "Peer disconnected" << std::endl;
 			event.peer->data = NULL;
+			onDisconnect = true;
 		}
 	}
 

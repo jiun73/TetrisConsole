@@ -108,8 +108,8 @@ public:
 	{
 		ConsolePixel p;
 		p.glyph = (char)177;
-		p.fg = DARK_GRAY;
-		p.bg = BG_GRAY;
+		p.fg = GRAY;
+		p.bg = BG_DARK_GRAY;
 		uint16_t line = ~(1 << (14 - holex)) & 0b1111111111110000;
 
 		board.pop_front();
