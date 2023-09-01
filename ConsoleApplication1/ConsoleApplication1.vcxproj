@@ -161,6 +161,8 @@
     <ClCompile Include="ConsoleApplication1.cpp" />
     <ClCompile Include="ConsoleRenderer.cpp" />
     <ClCompile Include="ConsoleRenderer.h" />
+    <ClCompile Include="FileInterpret.cpp" />
+    <ClCompile Include="FileInterpret.h" />
     <ClCompile Include="NetworkingX.h" />
     <ClCompile Include="Random.h" />
     <ClCompile Include="TetrisGlobal.cpp" />

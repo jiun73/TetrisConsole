@@ -2,6 +2,7 @@
 #include "Tetrominos.h" 
 #include "Random.h"
 #include "NetworkingX.h"
+#include "FileInterpret.h"
 
 bool peer = false;
 bool restart = false;
@@ -26,6 +27,7 @@ void drawRectPatch(const Rect& dest, ConsoleRenderer& ren)
 
 #include <bitset>
 #include <string>
+#include <sstream>
 
 class ConsoleKeyboard 
 {
@@ -378,37 +380,62 @@ public:
 
 	}
 
+	virtual void onLose() 
+	{
+		if (!clr)
+		{
+			ren.clear();
+			clr = true;
+		}
+
+		ren.drawText("You lost !", { 20, 20 });
+		ren.drawText("Continue? Y/N", { 18, 21 });
+
+		if (kin.held('Y'))
+		{
+			lost = false;
+			resetAll();
+		}
+		else if (kin.held('N'))
+		{
+			run = false;
+		}
+	}
+
 	virtual void update()
 	{
 		if (!lost)
 			gameUpdate();
 		else
-		{
-			if (!clr)
-			{
-				if(save != nullptr)
-					delete save;
-				save = nullptr;
-				ren.clear();
-				clr = true;
-			}
-			ren.drawText("You lost !", { 20, 20 });
-			ren.drawText("Continue? Y/N", { 18, 21 });
-
-			if (kin.held('Y')) 
-			{
-				lost = false;
-				board.clear();
-				randomBlocks();
-				ren.clear();
-			}
-			else if (kin.held('N')) 
-			{
-				run = false;
-			}
-		}
+			onLose();
 
 		ren.present();
+	}
+
+	void resetAll() 
+	{
+		firstPlaced = false;
+		lastMoveWasRotation = false;
+		lastClearWasTSpin = 0;
+
+		linesCleared = 0;
+		level = 0;
+		points = 0;
+
+		combo = -1;
+		backtoback = -1;
+		tspinVal = 0;
+
+		lost = false;
+		if (save != nullptr)
+			delete save;
+		save = nullptr;
+		points = 0;
+		tspinVal = 0;
+		board.clear();
+		nextPieces.clear();
+		randomBlocks();
+		ren.clear();
 	}
 };
 
@@ -418,6 +445,10 @@ private:
 	NetworkingX net;
 	bool _init = false;
 	TetrisBoard boardOpp;
+	bool win = false;
+
+	int wins = 0;
+	int losses = 0;
 
 public:
 	void sendLines(std::vector<int>& list) override
@@ -440,76 +471,168 @@ public:
 		net.signal(3);
 	}
 
+	void onLose() override 
+	{
+		if (!clr)
+		{
+			ren.clear();
+			clr = true;
+		}
+
+		losses++;
+
+		std::stringstream ss;
+		ss << wins << " wins and " << losses << " losses";
+		ren.drawText(ss.str(), { 20, 20 });
+
+		ren.drawText("You lose >:)", { 20, 20 });
+		ren.drawText("Rematch? Y/N", { 17, 21 });
+
+		if (kin.held('Y'))
+		{
+			net.send(3);
+			net.signal(3);
+
+			while (net.hasSignal(3))
+			{
+				if (net.read<int>() == 3)
+				{
+					
+					resetAll();
+				}
+			}
+		}
+		else if (kin.held('N'))
+		{
+			run = false;
+		}
+	}
+
+	void onWin()
+	{
+		if (!clr)
+		{
+			ren.clear();
+			clr = true;
+		}
+
+		std::stringstream ss;
+		ss << wins << " wins and " << losses << " losses";
+		ren.drawText(ss.str(), { 20, 20 });
+
+		ren.drawText("You WIN >:)", { 20, 20 });
+		ren.drawText("Rematch? Y/N", { 17, 21 });
+
+		wins++;
+
+		if (kin.held('Y'))
+		{
+			net.send(3);
+			net.signal(3);
+
+			while (net.hasSignal(3))
+			{
+				if (net.read<int>() == 3)
+				{
+					win = false;
+					resetAll();
+				}
+			}
+		}
+		else if (kin.held('N'))
+		{
+			run = false;
+		}
+	}
+
 	void update() override
 	{
-		if (!_init)
-			init();
-		else 
+
+		if (!win) {
+			if (!_init)
+				init();
+			else
+			{
+				while (net.hasSignal(3))
+				{
+					int messageType = net.read<int>();
+
+					if (messageType == 0) {
+						int type = net.read<int>();
+						V2d_i pos = net.read<V2d_i>();
+						int rotation = net.read<int>();
+						int tspinValue = net.read<int>();
+						bool fplaced = net.read<bool>();
+
+						Tetromino nBlock;
+						nBlock.setType(type);
+						nBlock.pos = pos;
+						nBlock.setRotation(rotation);
+						boardOpp.addTetromino(nBlock);
+
+						int cleared = 0;
+						int linesToSend = 0;
+						bool wasTspin = tspinVal;
+						int _points = 0;
+						int _combo = 0;
+						int _b2b = 0;
+						bool loss = 0;
+						calcPoints(boardOpp, cleared, _points, tspinValue, _combo, _b2b, linesToSend, loss, 0, fplaced);
+
+						std::vector<int> list = getGarbage(linesToSend);
+						sendLines(list);
+						board.addGarbagelineList(list);
+
+						if (loss) //means that we win
+						{
+							net.send(2);
+							net.signal(3);
+							win = true;
+						}
+
+					}
+					else if (messageType == 1) {
+						size_t size = net.read<size_t>();
+						std::vector<int> list;
+						for (int i = 0; i < size; i++)
+							list.push_back(net.read<int>());
+
+						boardOpp.addGarbagelineList(list);
+					}
+					else if (messageType == 2) //we lose
+					{
+						lost = true;
+					}
+				}
+
+				ren.setDrawColor(BLACK, BG_BLACK);
+				ren.setDrawGlyph(' ');
+				ren.drawRect({ {60, 0 }, { 11, 21 } });
+				boardOpp.draw(ren, 40);
+				ren.setDrawColor(WHITE, BG_BLACK);
+				drawRectPatch({ {60, 0 }, { 11, 21 } }, ren);
+				Tetris::update();
+
+				if (net.disconnected())
+				{
+					ren.clear();
+					std::cout << "Peer disconnected\n";
+					system("pause");
+					run = false;
+				}
+
+			}
+		}
+		else
 		{
-			while (net.hasSignal(3)) 
-			{
-				int messageType = net.read<int>();
-
-				if (messageType == 0) {
-					int type = net.read<int>();
-					V2d_i pos = net.read<V2d_i>();
-					int rotation = net.read<int>();
-					int tspinValue = net.read<int>();
-					bool fplaced = net.read<bool>();
-
-					Tetromino nBlock;
-					nBlock.setType(type);
-					nBlock.pos = pos;
-					nBlock.setRotation(rotation);
-					boardOpp.addTetromino(nBlock);
-
-					int cleared = 0;
-					int linesToSend = 0;
-					bool wasTspin = tspinVal;
-					int _points = 0;
-					int _combo = 0;
-					int _b2b = 0;
-					bool loss = 0;
-					calcPoints(boardOpp, cleared, _points, tspinValue, _combo, _b2b, linesToSend, loss, 0, fplaced);
-
-					std::vector<int> list = getGarbage(linesToSend);
-					sendLines(list);
-					board.addGarbagelineList(list);
-
-				}
-				else if (messageType == 1) {
-					size_t size = net.read<size_t>();
-					std::vector<int> list;
-					for (int i = 0; i < size; i++)
-						list.push_back(net.read<int>());
-					
-					boardOpp.addGarbagelineList(list);
-				}
-
-			}
-
-			ren.setDrawColor(BLACK, BG_BLACK);
-			ren.setDrawGlyph(' ');
-			ren.drawRect({ {60, 0 }, { 11, 21 } });
-			boardOpp.draw(ren, 40);
-			ren.setDrawColor(WHITE, BG_BLACK);
-			drawRectPatch({ {60, 0 }, { 11, 21 } }, ren);
-			Tetris::update();
-
-			if (net.disconnected())
-			{
-				ren.clear();
-				std::cout << "Peer disconnected\n";
-				system("pause");
-				run = false;
-			}
-
+			onWin();
 		}
 	}
 
 	void init() 
 	{
 		std::cout << "Host? Y/N" << std::endl;
+		bool skip = false;
 		char c;
 		std::cin >> c;
 
@@ -521,13 +644,53 @@ public:
 		}
 		else if (c == 'N')
 		{
-			std::cout << "ip? (leave empty for localhost)";
+			std::cout << "ip? (enter CHOOSE for a list of previouly entered ips)\n";
 			std::string s;
 			std::cin >> s;
-			if (s.empty())
-				_init = net.join();
-			else
-				_init = net.join(s);
+			if (s.compare("CHOOSE") == 0)
+			{
+				std::vector<std::string> collectedIps;
+				File f("savedIps.sav");
+				if (f.open_read())
+				{
+					while (f.get_cursor() < f.size())
+						collectedIps.push_back(f.readwrite_string("", "ip"));
+				}
+
+				int i = 0;
+				for (auto& ip : collectedIps)
+				{
+					std::cout << i << ": " << ip << "\n";
+					i++;
+				}
+
+				if (!collectedIps.empty())
+				{
+					int chosenIpIndex = 0;
+					std::cin >> chosenIpIndex;
+
+					s = collectedIps.at(chosenIpIndex);
+				}
+				else
+				{
+					std::cout << "There was no saved ips\n";
+					skip = true;
+				}
+			}
+
+
+			if (!skip) {
+				bool joinSuccessfull = net.join();
+				if (joinSuccessfull)
+				{
+					File f("savedIps.sav");
+					f.open_write();
+					f.move_cursor_to(f.size());
+					f.readwrite_string(s, "ip");
+
+					_init = true;
+				}
+			}
 		}
 		else
 		{
