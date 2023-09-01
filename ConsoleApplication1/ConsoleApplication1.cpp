@@ -347,6 +347,9 @@ public:
 		ren.setDrawGlyph(' ');
 		ren.drawRect({ {0, 0 }, { 4, 4 } });
 
+		ren.setDrawGlyph(' ');
+		ren.drawRect({ {40, 10 }, { 15, 5} });
+
 		ren.setDrawColor(WHITE, BG_BLACK);
 
 		calcMovement();

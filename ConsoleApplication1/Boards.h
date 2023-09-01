@@ -204,7 +204,8 @@ public:
 				if (current)
 				{
 					V2d_i r = { (i % 16) + 16, y - 10 };
-					ren.drawPixel(r);
+					if(i > 3)
+						ren.drawPixel(r);
 				}
 			}
 			y++;
