@@ -157,7 +157,6 @@ public:
 			{
 				block.pos.y--;
 				tspinVal = board.addTetromino(block, lastMoveWasRotation);
-				std::cout << tspinVal << std::endl;
 				onBlockPlacement(block);
 				nextBlock();
 				saveLock = false;
