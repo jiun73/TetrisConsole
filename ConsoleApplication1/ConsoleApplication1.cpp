@@ -96,6 +96,7 @@ public:
 	{
 		sendLines(garbageBuffer);
 		board.addGarbagelineList(garbageBuffer);
+		garbageBuffer.clear();
 	}
 
 	void addGarbageToBuffer(std::vector<int>& list)
@@ -698,7 +699,7 @@ public:
 
 
 			if (!skip) {
-				bool joinSuccessfull = net.join();
+				bool joinSuccessfull = net.join(s);
 				if (joinSuccessfull)
 				{
 					File f("savedIps.sav");
